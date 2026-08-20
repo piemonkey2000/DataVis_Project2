@@ -1,6 +1,12 @@
 # DataVis_Project2
 Data Visualizations Project 2 : Harry Pearson : Masters Class
 
+[Required Packages to Run this Code]
+1) Numpy
+2) Pandas
+3) dash
+4) plotly
+
 This Project is my Submission for our Project 2 Assignment.
 The Data is a set information from netflix.com found on Kaggle.com
 To use this dashboard:
