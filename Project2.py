@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.io as pio
-from dash import Dash, html, dcc, Input, Output, callback, dash_table
+from dash import Dash, html, dcc, Input, Output, State, callback, ctx, dash_table
 
 df = pd.read_csv('netflix_titles.csv')
 
@@ -82,6 +82,22 @@ app.layout = html.Div([
             children="Click a pie slice above to see matching movies",
             style={"marginTop": "0px"}
         ),
+
+        html.Div([
+            dcc.Input(
+                id="movie-search-input",
+                type="text",
+                placeholder="Search movie titles",
+                debounce=True,
+                style={"flex": "1", "padding": "8px"}
+            ),
+            html.Button(
+                "Search",
+                id="movie-search-button",
+                n_clicks=0,
+                style={"padding": "8px 14px", "cursor": "pointer"}
+            )
+        ], style={"display": "flex", "gap": "8px", "marginBottom": "12px"}),
 
         dash_table.DataTable(
             id="movie-data-table",
@@ -221,9 +237,30 @@ def toggle_actor_picker(view_mode):
     Input("Director-Genre-Graph", "clickData"),
     Input("director-dropdown", "value"),
     Input("actor-dropdown", "value"),
-    Input("view-mode", "value")
+    Input("view-mode", "value"),
+    Input("movie-search-button", "n_clicks"),
+    State("movie-search-input", "value")
 )
-def update_table_on_click(click_data, selected_director, selected_actor, view_mode):
+def update_table_on_click(
+    click_data,
+    selected_director,
+    selected_actor,
+    view_mode,
+    search_clicks,
+    search_term
+):
+    if ctx.triggered_id == "movie-search-button":
+        search_term = (search_term or "").strip()
+        if not search_term:
+            return [], "Enter a movie title to search."
+
+        search_results = df[
+            df["title"].fillna("").str.contains(search_term, case=False, na=False)
+        ].copy()
+        display_df = search_results[["title", "cast", "release_year", "country"]].copy()
+        display_df["cast"] = display_df["cast"].apply(format_cast)
+        return display_df.to_dict("records"), f"Search results for '{search_term}'"
+
     if not selected_director:
         return [], "Select a director to view records."
 
